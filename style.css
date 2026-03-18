@@ -1,0 +1,305 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #fafaf9;
+  --text: #1a1a1a;
+  --muted: #888;
+  --border: #ccc;
+  --btn-size: 160px;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 24px 60px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* Header */
+.app-header {
+  width: 100%;
+  margin-bottom: 48px;
+}
+
+.app-title {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 300;
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 0.2em;
+}
+
+/* Input */
+.app-main {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.input-group {
+  width: 100%;
+  margin-bottom: 48px;
+}
+
+.input-label {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.15em;
+  margin-bottom: 8px;
+}
+
+.intention-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 0.5px solid var(--border);
+  outline: none;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 300;
+  font-size: 15px;
+  color: var(--text);
+  padding: 8px 0 10px;
+  caret-color: var(--text);
+  transition: border-color 0.2s;
+}
+
+.intention-input:focus {
+  border-bottom-color: var(--text);
+}
+
+.intention-input::placeholder {
+  color: #c8c8c8;
+}
+
+/* Button */
+.button-wrap {
+  margin-bottom: 48px;
+}
+
+.yatta-btn {
+  position: relative;
+  width: var(--btn-size);
+  height: var(--btn-size);
+  border-radius: 50%;
+  border: 0.5px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.yatta-btn:hover {
+  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+}
+
+.yatta-btn:active {
+  transform: scale(0.97);
+}
+
+.yatta-text {
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-weight: 900;
+  font-size: 20px;
+  color: var(--text);
+  letter-spacing: 0.05em;
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Ripple */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.06);
+  transform: scale(0);
+  pointer-events: none;
+}
+
+.ripple.animate {
+  animation: ripple-anim 0.55s ease-out forwards;
+}
+
+@keyframes ripple-anim {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Button pop animation */
+@keyframes btn-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(0.93); }
+  70%  { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+.yatta-btn.popping {
+  animation: btn-pop 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+/* Message Area */
+.message-area {
+  width: 100%;
+  min-height: 56px;
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.message-main {
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--text);
+  line-height: 1.6;
+  letter-spacing: 0.03em;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.message-main.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.message-sub {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--muted);
+  margin-top: 6px;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.5s ease 0.1s, transform 0.5s ease 0.1s;
+}
+
+.message-sub.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.thinking {
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 1; }
+}
+
+/* Divider */
+.divider {
+  width: 100%;
+  border: none;
+  border-top: 0.5px solid #e8e8e8;
+  margin-bottom: 24px;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+
+.divider.visible {
+  opacity: 1;
+}
+
+/* Timeline */
+.timeline {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.timeline-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  opacity: 0;
+  animation: fade-in 0.4s ease forwards;
+}
+
+@keyframes fade-in {
+  to { opacity: 1; }
+}
+
+.timeline-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ccc;
+  flex-shrink: 0;
+  margin-top: 7px;
+}
+
+.timeline-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.timeline-text {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 300;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.timeline-meta {
+  display: flex;
+  gap: 8px;
+  margin-top: 3px;
+  align-items: center;
+}
+
+.timeline-time {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.timeline-intention {
+  font-size: 11px;
+  color: #bbb;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timeline-source {
+  font-size: 10px;
+  color: #ccc;
+  padding: 1px 5px;
+  border: 0.5px solid #ddd;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 360px) {
+  :root { --btn-size: 140px; }
+  .yatta-text { font-size: 18px; }
+}

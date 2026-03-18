@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a1a1a" />
+  <meta name="description" content="できた — 身体的チャレンジ達成アプリ" />
+  <title>できた</title>
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@900&family=Noto+Sans+JP:wght@300;400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <span class="app-title">できた</span>
+    </header>
+
+    <main class="app-main">
+      <div class="input-group">
+        <label class="input-label" for="intention">today's challenge</label>
+        <input
+          id="intention"
+          class="intention-input"
+          type="text"
+          placeholder="例：3km走る、腕立て20回..."
+          autocomplete="off"
+          maxlength="100"
+        />
+      </div>
+
+      <div class="button-wrap">
+        <button class="yatta-btn" id="yattaBtn" onclick="fireYatta()" aria-label="やった！ボタン">
+          <span class="yatta-text">やった！</span>
+          <span class="ripple" id="ripple"></span>
+        </button>
+      </div>
+
+      <div class="message-area" id="messageArea" aria-live="polite">
+        <p class="message-main" id="messageMain"></p>
+        <p class="message-sub" id="messageSub"></p>
+      </div>
+
+      <hr class="divider" id="divider" />
+
+      <section class="timeline" id="timeline" aria-label="履歴">
+      </section>
+    </main>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
