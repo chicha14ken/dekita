@@ -12,7 +12,7 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(express.static(path.join(__dirname, '..')));
 
 // Fallback messages (Japanese)
 const FALLBACK_MESSAGES = [
@@ -112,7 +112,7 @@ app.post('/api/message', async (req, res) => {
 
 // Serve index.html for all other routes (Express v5 wildcard syntax)
 app.get('*splat', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, '..', 'index.html'));
 });
 
 process.on('uncaughtException', (err) => {
