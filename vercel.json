@@ -5,13 +5,7 @@
       "src": "server/server.js",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": [
-          "index.html",
-          "style.css",
-          "app.js",
-          "sw.js",
-          "manifest.json"
-        ]
+        "includeFiles": ["public/**"]
       }
     }
   ],
