@@ -162,6 +162,11 @@ html, body {
   animation: btn-pop 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
 }
 
+.yatta-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* Message Area */
 .message-area {
   width: 100%;
@@ -201,6 +206,12 @@ html, body {
   transform: translateY(0);
 }
 
+.message-main.limit-msg {
+  font-size: 14px;
+  color: #444;
+  font-weight: bold;
+}
+
 .thinking {
   font-size: 13px;
   color: var(--muted);
@@ -211,6 +222,13 @@ html, body {
 @keyframes pulse {
   0%, 100% { opacity: 0.4; }
   50%       { opacity: 1; }
+}
+
+/* Feedback area */
+.feedback-area {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 8px;
 }
 
 /* Divider */

@@ -2,6 +2,8 @@
 
 const HISTORY_KEY = 'dekita_history';
 const MAX_HISTORY = 7;
+const RATE_KEY = 'dekita_rate';
+const DAILY_LIMIT = 5;
 
 // ── Utilities ──────────────────────────────────────────────
 
@@ -53,6 +55,56 @@ function saveHistory(entry) {
 function formatTime(isoString) {
   const d = new Date(isoString);
   return d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+}
+
+// ── Rate limiting ───────────────────────────────────────────
+
+function getTodayKey() {
+  return new Date().toDateString();
+}
+
+function getTodayCount() {
+  try {
+    const data = JSON.parse(localStorage.getItem(RATE_KEY) || '{}');
+    return data[getTodayKey()] || 0;
+  } catch {
+    return 0;
+  }
+}
+
+function incrementTodayCount() {
+  try {
+    const data = JSON.parse(localStorage.getItem(RATE_KEY) || '{}');
+    const key = getTodayKey();
+    data[key] = (data[key] || 0) + 1;
+    // Remove old date entries
+    Object.keys(data).forEach(k => { if (k !== key) delete data[k]; });
+    localStorage.setItem(RATE_KEY, JSON.stringify(data));
+  } catch {}
+}
+
+function isLimitReached() {
+  return getTodayCount() >= DAILY_LIMIT;
+}
+
+function applyRateLimitUI() {
+  const btn = document.getElementById('yattaBtn');
+  if (isLimitReached()) {
+    btn.disabled = true;
+    showLimitMessage();
+  } else {
+    btn.disabled = false;
+  }
+}
+
+function showLimitMessage() {
+  const mainEl = document.getElementById('messageMain');
+  const subEl  = document.getElementById('messageSub');
+  mainEl.className = 'message-main visible limit-msg';
+  mainEl.textContent = '今日分のメッセージはおわりです。また明日。';
+  subEl.className = 'message-sub';
+  subEl.textContent = '';
+  document.getElementById('divider').classList.add('visible');
 }
 
 // ── Fetch with timeout ─────────────────────────────────────
@@ -114,6 +166,21 @@ function showMessage(text) {
   });
 }
 
+function showFeedbackThanks() {
+  const area = document.getElementById('feedbackArea');
+  if (!area) return;
+  area.innerHTML = '<p style="font-size:12px; color:#888;">ありがとうございます。</p>';
+  area.style.transition = '';
+  area.style.opacity = '1';
+  area.style.display = '';
+
+  setTimeout(() => {
+    area.style.transition = 'opacity 0.8s';
+    area.style.opacity = '0';
+    setTimeout(() => { area.style.display = 'none'; }, 800);
+  }, 3000);
+}
+
 function triggerRipple(btn) {
   const ripple = document.getElementById('ripple');
   ripple.style.width  = `${btn.offsetWidth}px`;
@@ -168,6 +235,9 @@ function escapeHtml(str) {
 // ── Main action ────────────────────────────────────────────
 
 async function fireYatta() {
+  // Rate limit check
+  if (isLimitReached()) return;
+
   const btn       = document.getElementById('yattaBtn');
   const intention = document.getElementById('intention').value.trim();
 
@@ -222,16 +292,31 @@ async function fireYatta() {
   };
   saveHistory(entry);
 
-  // 7. Re-render timeline
+  // 7. Increment rate limit count
+  incrementTodayCount();
+
+  // 8. Re-render timeline
   renderTimeline();
 
-  btn.disabled = false;
+  // 9. Reset input field
+  document.getElementById('intention').value = '';
+
+  // 10. Show "ありがとうございます。" with auto-fade
+  showFeedbackThanks();
+
+  // 11. Check rate limit — disable button if reached
+  if (isLimitReached()) {
+    showLimitMessage();
+  } else {
+    btn.disabled = false;
+  }
 }
 
 // ── Init ───────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
   renderTimeline();
+  applyRateLimitUI();
 
   // Allow Enter key to trigger
   document.getElementById('intention').addEventListener('keydown', (e) => {
