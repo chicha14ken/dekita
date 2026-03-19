@@ -40,7 +40,40 @@
         <p class="message-sub" id="messageSub"></p>
       </div>
 
-      <div class="feedback-area" id="feedbackArea" style="display:none;"></div>
+      <div id="feedbackArea" style="display:none; text-align:center; margin-top:1.5rem;">
+        <p style="font-size:12px; color:#888; margin-bottom:10px;">
+          メッセージ、刺さりましたか？
+        </p>
+        <div id="feedbackButtons" style="display:flex; justify-content:center; gap:12px; margin-bottom:12px;">
+          <button onclick="selectFeedback('great')"
+            style="font-size:20px; background:none; border:0.5px solid #ccc;
+                   border-radius:50%; width:44px; height:44px; cursor:pointer;">
+            😍
+          </button>
+          <button onclick="selectFeedback('ok')"
+            style="font-size:20px; background:none; border:0.5px solid #ccc;
+                   border-radius:50%; width:44px; height:44px; cursor:pointer;">
+            😐
+          </button>
+          <button onclick="selectFeedback('miss')"
+            style="font-size:20px; background:none; border:0.5px solid #ccc;
+                   border-radius:50%; width:44px; height:44px; cursor:pointer;">
+            🤔
+          </button>
+        </div>
+        <div id="feedbackComment" style="display:none; padding:0 1rem;">
+          <input type="text" id="feedbackText"
+            placeholder="よかったらもう少し教えてください（任意）"
+            style="width:100%; font-size:13px; padding:8px;
+                   border:0.5px solid #ccc; border-radius:4px; margin-bottom:8px; box-sizing:border-box;">
+          <button onclick="submitFeedback()"
+            style="font-size:12px; color:#888; background:none;
+                   border:0.5px solid #ccc; padding:6px 16px;
+                   border-radius:4px; cursor:pointer;">
+            送る
+          </button>
+        </div>
+      </div>
 
       <hr class="divider" id="divider" />
 

@@ -5,6 +5,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
+const nodemailer = require('nodemailer');
 
 const app = express();
 
@@ -108,6 +109,38 @@ app.post('/api/message', async (req, res) => {
     console.error('[API error]', err?.status, err?.message || err);
     return res.json({ message: getRandomFallback(), source: 'fallback' });
   }
+});
+
+app.post('/api/feedback', async (req, res) => {
+  const { rating, comment, intention, message, streakCount } = req.body;
+  const emoji = { great: '😍', ok: '😐', miss: '🤔' }[rating] || '?';
+  const subject = `[Dekita] ${emoji} 「${intention}」へのフィードバック`;
+  const body = `
+評価: ${emoji} ${rating}
+入力: 「${intention}」
+AIメッセージ: 「${message}」
+連続日数: ${streakCount}日
+コメント: ${comment || 'なし'}
+  `.trim();
+
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD
+      }
+    });
+    await transporter.sendMail({
+      from: process.env.GMAIL_USER,
+      to: process.env.FEEDBACK_EMAIL,
+      subject,
+      text: body
+    });
+  } catch (e) {
+    console.error('mail error', e);
+  }
+  res.json({ ok: true });
 });
 
 // Serve index.html for all other routes (Express v5 wildcard syntax)

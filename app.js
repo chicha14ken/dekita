@@ -232,6 +232,18 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
+// ── Rate limiting ─────────────────────────────────────────
+
+function checkRateLimit() {
+  const today = new Date().toISOString().split('T')[0];
+  const key = 'dekita_usage_' + today;
+  const count = parseInt(localStorage.getItem(key) || '0');
+  const DAILY_LIMIT = 5;
+  if (count >= DAILY_LIMIT) return false;
+  localStorage.setItem(key, count + 1);
+  return true;
+}
+
 // ── Main action ────────────────────────────────────────────
 
 async function fireYatta() {
@@ -240,6 +252,31 @@ async function fireYatta() {
 
   const btn       = document.getElementById('yattaBtn');
   const intention = document.getElementById('intention').value.trim();
+
+  // Rate limit check
+  const canUseAI = checkRateLimit();
+  if (!canUseAI) {
+    const fallbacks = [
+      ["やり遂げた。", "誰でもなく、自分が。"],
+      ["できた。", "この一歩が、全てだった。"],
+      ["止まらなかった。", "それだけで十分。"]
+    ];
+    const pair = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+    showMessage(pair[0] + '\n' + pair[1]);
+    setTimeout(() => {
+      const sub = document.getElementById('messageSub');
+      if (sub) sub.textContent = '今日分のメッセージは終わりです。また明日。';
+    }, 2000);
+    saveHistory({
+      id: Date.now(),
+      intention: intention || '今日も何かやった',
+      message: pair[0] + ' ' + pair[1],
+      timestamp: new Date().toISOString(),
+      source: 'rate-limited',
+    });
+    renderTimeline();
+    return;
+  }
 
   // 1. Button animation
   btn.classList.remove('popping');
@@ -298,18 +335,74 @@ async function fireYatta() {
   // 8. Re-render timeline
   renderTimeline();
 
-  // 9. Reset input field
+  // 9. Track for feedback
+  lastIntention = intention;
+  lastMessage = result.message;
+
+  // 10. Reset input field
   document.getElementById('intention').value = '';
 
-  // 10. Show "ありがとうございます。" with auto-fade
-  showFeedbackThanks();
+  // 11. Show feedback area after 3rd tap
+  const updatedHistory = loadHistory();
+  if (updatedHistory.length === 3) {
+    setTimeout(() => showFeedbackArea(), 1500);
+  }
 
-  // 11. Check rate limit — disable button if reached
+  // 12. Check rate limit — disable button if reached
   if (isLimitReached()) {
     showLimitMessage();
   } else {
     btn.disabled = false;
   }
+}
+
+// ── Feedback ──────────────────────────────────────────────
+
+let currentFeedbackRating = null;
+let lastIntention = '';
+let lastMessage = '';
+
+function showFeedbackArea() {
+  const area = document.getElementById('feedbackArea');
+  if (area) {
+    area.style.display = 'block';
+    area.style.opacity = '0';
+    setTimeout(() => {
+      area.style.transition = 'opacity 0.5s';
+      area.style.opacity = '1';
+    }, 100);
+  }
+}
+
+function selectFeedback(rating) {
+  currentFeedbackRating = rating;
+  const buttons = document.querySelectorAll('#feedbackButtons button');
+  buttons.forEach(b => b.style.borderColor = '#ccc');
+  const idx = ['great', 'ok', 'miss'].indexOf(rating);
+  if (buttons[idx]) buttons[idx].style.borderColor = '#333';
+  document.getElementById('feedbackComment').style.display = 'block';
+}
+
+async function submitFeedback() {
+  const comment = document.getElementById('feedbackText').value;
+  if (!currentFeedbackRating) return;
+  try {
+    await fetch('/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        rating: currentFeedbackRating,
+        comment: comment,
+        intention: lastIntention,
+        message: lastMessage,
+        streakCount: getStreakCount()
+      })
+    });
+  } catch (e) {
+    console.log('feedback error', e);
+  }
+  document.getElementById('feedbackArea').innerHTML =
+    '<p style="font-size:12px; color:#888;">ありがとうございます。</p>';
 }
 
 // ── Init ───────────────────────────────────────────────────
