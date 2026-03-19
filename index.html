@@ -15,10 +15,6 @@
 </head>
 <body>
   <div class="app">
-    <header class="app-header">
-      <span class="app-title">できた</span>
-    </header>
-
     <main class="app-main">
       <div class="input-group">
         <label class="input-label" for="intention">today's challenge</label>
@@ -34,7 +30,7 @@
 
       <div class="button-wrap">
         <button class="yatta-btn" id="yattaBtn" onclick="fireYatta()" aria-label="やった！ボタン">
-          <span class="yatta-text">やった！</span>
+          <span class="yatta-text">できた</span>
           <span class="ripple" id="ripple"></span>
         </button>
       </div>
@@ -43,6 +39,8 @@
         <p class="message-main" id="messageMain"></p>
         <p class="message-sub" id="messageSub"></p>
       </div>
+
+      <div class="feedback-area" id="feedbackArea" style="display:none;"></div>
 
       <hr class="divider" id="divider" />
 
