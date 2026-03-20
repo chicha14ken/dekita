@@ -10,7 +10,10 @@
           "style.css",
           "app.js",
           "sw.js",
-          "manifest.json"
+          "manifest.json",
+          "favicon.svg",
+          "icon-192.png",
+          "icon-512.png"
         ]
       }
     }
