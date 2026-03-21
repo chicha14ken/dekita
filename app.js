@@ -162,6 +162,8 @@ function showMessage(text) {
     requestAnimationFrame(() => {
       mainEl.classList.add('visible');
       if (subText) subEl.classList.add('visible');
+      // Track message display completion
+      if (window.va) window.va('event', { name: 'message_received' });
     });
   });
 }
@@ -277,6 +279,9 @@ async function fireYatta() {
     renderTimeline();
     return;
   }
+
+  // Track challenge submission
+  if (window.va) window.va('event', { name: 'challenge_submit' });
 
   // 1. Button animation
   btn.classList.remove('popping');
