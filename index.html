@@ -26,8 +26,17 @@
   <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
+  <section class="hero">
+    <h1>誰も見ていない場所でも、<br>あなたの努力を見ている。</h1>
+    <p class="hero-sub">AIが、あなたの「できた」を証人になる。</p>
+    <div class="hero-ctas">
+      <a href="#challenge" class="cta-primary">今日のチャレンジを始める</a>
+      <a href="#about" class="cta-secondary">Dekitaとは?</a>
+    </div>
+  </section>
+
   <div class="app">
-    <main class="app-main">
+    <main class="app-main" id="challenge">
       <div class="input-group">
         <label class="input-label" for="intention">today's challenge</label>
         <input
@@ -93,6 +102,35 @@
       </section>
     </main>
   </div>
+
+  <section class="about" id="about">
+    <h2 class="about-title">Dekitaとは?</h2>
+    <p class="about-desc">あなたの「できた」をAIが証人になります。</p>
+    <ol class="about-steps">
+      <li class="about-step">
+        <span class="step-num">1</span>
+        <div class="step-body">
+          <strong>今日のチャレンジを入力</strong>
+          <p>「3km走る」「腕立て20回」など、今日やりたいことを書くだけ。</p>
+        </div>
+      </li>
+      <li class="about-step">
+        <span class="step-num">2</span>
+        <div class="step-body">
+          <strong>AIが証人になり、メッセージをくれる</strong>
+          <p>できた瞬間にボタンを押すと、AIがあなたの努力を認めるメッセージを届けます。</p>
+        </div>
+      </li>
+      <li class="about-step">
+        <span class="step-num">3</span>
+        <div class="step-body">
+          <strong>「できた」の記録が積み重なる</strong>
+          <p>毎日の積み重ねがタイムラインに残り、自分の成長を可視化できます。</p>
+        </div>
+      </li>
+    </ol>
+    <a href="#challenge" class="cta-primary about-cta">今日のチャレンジを始める</a>
+  </section>
 
   <script src="/app.js"></script>
 </body>
