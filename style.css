@@ -4,6 +4,142 @@
   padding: 0;
 }
 
+/* Hero Section */
+.hero {
+  background: #1B3A2D;
+  color: #FFF9EF;
+  padding: 80px 24px;
+  text-align: center;
+  width: 100%;
+}
+
+.hero h1 {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.hero-sub {
+  font-size: 1rem;
+  font-weight: 300;
+  margin-bottom: 40px;
+  opacity: 0.85;
+}
+
+.hero-ctas {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.cta-primary {
+  display: inline-block;
+  background: #FFF9EF;
+  color: #1B3A2D;
+  padding: 14px 32px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1rem;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.cta-primary:hover {
+  opacity: 0.9;
+}
+
+.cta-secondary {
+  display: inline-block;
+  color: #FFF9EF;
+  border-bottom: 1px solid rgba(255,249,239,0.5);
+  font-size: 0.9rem;
+  text-decoration: none;
+  padding-bottom: 2px;
+  transition: border-color 0.2s;
+}
+
+.cta-secondary:hover {
+  border-color: #FFF9EF;
+}
+
+/* About Section */
+.about {
+  background: #f5f3ef;
+  padding: 64px 24px;
+  width: 100%;
+}
+
+.about-title {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.25rem, 3.5vw, 1.75rem);
+  color: #1B3A2D;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.about-desc {
+  font-size: 0.95rem;
+  color: #666;
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.about-steps {
+  list-style: none;
+  max-width: 480px;
+  margin: 0 auto 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.about-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.step-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 50%;
+  background: #1B3A2D;
+  color: #FFF9EF;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.step-body strong {
+  display: block;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 4px;
+}
+
+.step-body p {
+  font-size: 0.875rem;
+  color: #555;
+  line-height: 1.6;
+}
+
+.about-cta {
+  display: block;
+  max-width: 320px;
+  margin: 0 auto;
+  text-align: center;
+  background: #1B3A2D;
+  color: #FFF9EF;
+}
+
 :root {
   --bg: #fafaf9;
   --text: #1a1a1a;
