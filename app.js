@@ -50,6 +50,10 @@ function saveHistory(entry) {
   const history = loadHistory();
   history.unshift(entry);
   localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, MAX_HISTORY)));
+  // ログイン済みの場合はFirestoreにも保存（firebase-auth.jsが提供）
+  if (typeof window.saveToFirestore === 'function' && typeof window.isLoggedIn === 'function' && window.isLoggedIn()) {
+    window.saveToFirestore(entry);
+  }
 }
 
 function formatTime(isoString) {
@@ -409,6 +413,10 @@ async function submitFeedback() {
   document.getElementById('feedbackArea').innerHTML =
     '<p style="font-size:12px; color:#888;">ありがとうございます。</p>';
 }
+
+// ── グローバル公開（firebase-auth.jsから呼び出し可能にする）──
+
+window.renderTimeline = renderTimeline;
 
 // ── Init ───────────────────────────────────────────────────
 

@@ -24,6 +24,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@900&family=Noto+Sans+JP:wght@300;400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/style.css" />
   <script defer src="/_vercel/insights/script.js"></script>
+  <!-- Firebase SDK (CDN) -->
+  <script type="module" src="/firebase-auth.js"></script>
 </head>
 <body>
   <section class="hero">
@@ -36,6 +38,18 @@
   </section>
 
   <div class="app">
+    <!-- 認証バー -->
+    <div class="auth-bar" id="authBar">
+      <div id="authGuest" class="auth-guest">
+        <button class="auth-login-btn" id="loginBtn" onclick="handleGoogleLogin()">Googleでログイン</button>
+      </div>
+      <div id="authUser" class="auth-user" style="display:none;">
+        <img class="auth-avatar" id="authAvatar" src="" alt="" width="28" height="28" />
+        <span class="auth-name" id="authName"></span>
+        <button class="auth-logout-btn" id="logoutBtn" onclick="handleLogout()">ログアウト</button>
+      </div>
+    </div>
+
     <main class="app-main" id="challenge">
       <div class="input-group">
         <label class="input-label" for="intention">今日のチャレンジ</label>
