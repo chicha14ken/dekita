@@ -218,7 +218,7 @@ function renderTimeline() {
         <div class="timeline-meta">
           <span class="timeline-time">${formatTime(entry.timestamp)}</span>
           ${entry.intention ? `<span class="timeline-intention">${escapeHtml(entry.intention)}</span>` : ''}
-          ${entry.source === 'fallback' ? '<span class="timeline-source">offline</span>' : ''}
+          ${entry.source === 'fallback' ? '<span class="timeline-source">オフライン</span>' : ''}
         </div>
       </div>
     `;
