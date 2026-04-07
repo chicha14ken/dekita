@@ -445,10 +445,16 @@ function renderHistoryView() {
     entries.forEach(entry => {
       const entryEl = document.createElement('div');
       entryEl.className = 'history-entry';
+
+      const intention = entry.intention || '';
+      const label = intention.length > 30 ? intention.slice(0, 30) + '…' : intention;
+
       entryEl.innerHTML = `
-        <div class="history-user-msg">${escapeHtml(entry.intention || '')}</div>
         <div class="history-ai-msg">${escapeHtml(entry.message || '')}</div>
-        <div class="history-time">${formatTime(entry.timestamp)}</div>
+        <div class="history-meta">
+          <span class="history-label">${escapeHtml(label)}</span>
+          <span class="history-time">${formatTime(entry.timestamp)}</span>
+        </div>
       `;
       group.appendChild(entryEl);
     });
