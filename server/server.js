@@ -176,6 +176,38 @@ app.post('/api/message', async (req, res) => {
   }
 });
 
+app.post('/api/summarize', async (req, res) => {
+  const { turns } = req.body;
+  if (!Array.isArray(turns) || turns.length === 0) return res.json({ summary: '' });
+
+  const conversation = turns
+    .map(t => `${t.role === 'user' ? 'ユーザー' : 'AI'}: ${t.content}`)
+    .join('\n');
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const response = await client.messages.create(
+      {
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 50,
+        messages: [{
+          role: 'user',
+          content: `以下の会話を15〜25文字で要約してください。「何をした話か」が一目でわかるよう、名詞・動詞中心で短く具体的に。かぎ括弧・記号は不要。\n\n${conversation}`,
+        }],
+      },
+      { signal: controller.signal }
+    );
+    clearTimeout(timeoutId);
+    const summary = response.content[0]?.text?.trim() || '';
+    return res.json({ summary });
+  } catch {
+    clearTimeout(timeoutId);
+    return res.json({ summary: '' });
+  }
+});
+
 app.post('/api/reply', async (req, res) => {
   const { userReply, originalMessage, challengeName } = req.body;
   if (!userReply) return res.json({ message: 'うん、聞こえてる。' });

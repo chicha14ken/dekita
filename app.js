@@ -191,6 +191,32 @@ function applyRateLimitUI() {
 }
 
 
+function updateHistoryEntry(id, updates) {
+  const history = loadHistory();
+  const idx = history.findIndex(h => h.id === id);
+  if (idx !== -1) {
+    history[idx] = { ...history[idx], ...updates };
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  }
+}
+
+async function generateAndSaveSummary() {
+  if (!currentSessionId || currentSessionTurns.length < 2) return;
+  try {
+    const res = await fetch('/api/summarize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ turns: currentSessionTurns }),
+    });
+    const data = await res.json();
+    if (data.summary) {
+      updateHistoryEntry(currentSessionId, { summary: data.summary });
+    }
+  } catch {
+    // fail silently
+  }
+}
+
 function escapeHtml(str) {
   return str
     .replace(/&/g, '&amp;')
@@ -204,6 +230,8 @@ function escapeHtml(str) {
 let chatTurns = 0;
 let lastIntention = '';
 let lastMessage = '';
+let currentSessionId = null;
+let currentSessionTurns = [];
 
 async function sendChat() {
   const input = document.getElementById('chatInput');
@@ -249,14 +277,21 @@ async function sendChat() {
         daysSinceLastActivity,
       });
 
+      const sessionId = Date.now();
       saveHistory({
-        id: Date.now(),
+        id: sessionId,
         intention: text,
         message: result.message,
         timestamp: new Date().toISOString(),
         source: result.source || 'ai',
       });
       incrementTotalSessions();
+
+      currentSessionId = sessionId;
+      currentSessionTurns = [
+        { role: 'user', content: text },
+        { role: 'ai', content: result.message },
+      ];
 
       lastIntention = text;
       lastMessage = result.message;
@@ -274,6 +309,8 @@ async function sendChat() {
         originalMessage: lastMessage,
         challengeName: lastIntention,
       });
+      currentSessionTurns.push({ role: 'user', content: text });
+      currentSessionTurns.push({ role: 'ai', content: result.message });
       lastMessage = result.message;
     }
 
@@ -285,8 +322,10 @@ async function sendChat() {
 
     if (chatTurns >= MAX_CHAT_TURNS) {
       disableChatInput('また話しかけてきて。');
+      generateAndSaveSummary();
     } else if (isPaywallReached()) {
       showPaywall();
+      generateAndSaveSummary();
     } else {
       sendBtn.disabled = false;
       input.disabled = false;
@@ -395,13 +434,13 @@ function renderHistoryView() {
       const entryEl = document.createElement('div');
       entryEl.className = 'history-entry';
 
-      const intention = entry.intention || '';
-      const label = intention.length > 30 ? intention.slice(0, 30) + '…' : intention;
+      const summary = entry.summary || '';
+      const fallbackLabel = (entry.intention || '').slice(0, 30) + ((entry.intention || '').length > 30 ? '…' : '');
 
       entryEl.innerHTML = `
+        <div class="history-summary">${escapeHtml(summary || fallbackLabel)}</div>
         <div class="history-ai-msg">${escapeHtml(entry.message || '')}</div>
         <div class="history-meta">
-          <span class="history-label">${escapeHtml(label)}</span>
           <span class="history-time">${formatTime(entry.timestamp)}</span>
         </div>
       `;

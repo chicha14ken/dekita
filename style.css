@@ -319,10 +319,17 @@ html, body {
   gap: 6px;
 }
 
-.history-ai-msg {
+.history-summary {
   font-size: 14px;
   color: var(--text);
   font-weight: 400;
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+.history-ai-msg {
+  font-size: 13px;
+  color: var(--muted);
   line-height: 1.7;
 }
 
