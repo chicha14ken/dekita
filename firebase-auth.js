@@ -1,14 +1,14 @@
 'use strict';
 
 // Firebase CDN モジュール（ESM形式）
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js';
 import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
   signOut,
   onAuthStateChanged,
-} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
+} from 'https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js';
 import {
   getFirestore,
   collection,
@@ -17,7 +17,7 @@ import {
   getDocs,
   orderBy,
   query,
-} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+} from 'https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js';
 
 // ── Firebase初期化 ────────────────────────────────────────
 
