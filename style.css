@@ -423,6 +423,38 @@ html, body {
   font-family: 'Noto Sans JP', sans-serif;
 }
 
+/* ── Paywall ────────────────────────────────────────────── */
+
+.paywall-banner {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.paywall-text {
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.paywall-btn {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: #fff;
+  background: var(--green);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  cursor: not-allowed;
+  opacity: 0.5;
+  letter-spacing: 0.03em;
+}
+
 /* ── Responsive ─────────────────────────────────────────── */
 
 @media (max-width: 360px) {

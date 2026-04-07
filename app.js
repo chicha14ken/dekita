@@ -1,10 +1,10 @@
 'use strict';
 
 const HISTORY_KEY = 'dekita_history';
-const MAX_HISTORY = 7;
-const RATE_KEY = 'dekita_rate';
-const DAILY_LIMIT = 5;
-const MAX_CHAT_TURNS = 3;
+const MAX_HISTORY = 30;
+const SESSION_KEY = 'dekita_sessions_total';
+const FREE_SESSION_LIMIT = 5;
+const MAX_CHAT_TURNS = 5;
 
 // ── Utilities ──────────────────────────────────────────────
 
@@ -60,42 +60,18 @@ function formatTime(isoString) {
   return d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
 }
 
-// ── Rate limiting ───────────────────────────────────────────
+// ── Session counting ────────────────────────────────────────
 
-function getTodayKey() {
-  return new Date().toDateString();
+function getTotalSessions() {
+  return parseInt(localStorage.getItem(SESSION_KEY) || '0');
 }
 
-function getTodayCount() {
-  try {
-    const data = JSON.parse(localStorage.getItem(RATE_KEY) || '{}');
-    return data[getTodayKey()] || 0;
-  } catch {
-    return 0;
-  }
+function incrementTotalSessions() {
+  localStorage.setItem(SESSION_KEY, getTotalSessions() + 1);
 }
 
-function incrementTodayCount() {
-  try {
-    const data = JSON.parse(localStorage.getItem(RATE_KEY) || '{}');
-    const key = getTodayKey();
-    data[key] = (data[key] || 0) + 1;
-    Object.keys(data).forEach(k => { if (k !== key) delete data[k]; });
-    localStorage.setItem(RATE_KEY, JSON.stringify(data));
-  } catch {}
-}
-
-function isLimitReached() {
-  return getTodayCount() >= DAILY_LIMIT;
-}
-
-function checkRateLimit() {
-  const today = new Date().toISOString().split('T')[0];
-  const key = 'dekita_usage_' + today;
-  const count = parseInt(localStorage.getItem(key) || '0');
-  if (count >= DAILY_LIMIT) return false;
-  localStorage.setItem(key, count + 1);
-  return true;
+function isPaywallReached() {
+  return getTotalSessions() >= FREE_SESSION_LIMIT;
 }
 
 // ── Fetch ──────────────────────────────────────────────────
@@ -197,42 +173,23 @@ function disableChatInput(placeholderMsg) {
   if (btn) btn.disabled = true;
 }
 
+function showPaywall() {
+  const inputArea = document.getElementById('chatInputArea');
+  if (!inputArea) return;
+  inputArea.innerHTML = `
+    <div class="paywall-banner">
+      <p class="paywall-text">無料で使える5回を使い切りました。</p>
+      <button class="paywall-btn" disabled>有料プランへ（準備中）</button>
+    </div>
+  `;
+}
+
 function applyRateLimitUI() {
-  if (isLimitReached()) {
-    disableChatInput('今日分はおわりです。また明日。');
+  if (isPaywallReached()) {
+    showPaywall();
   }
 }
 
-// ── Timeline ────────────────────────────────────────────────
-
-function renderTimeline() {
-  const history = loadHistory();
-  const container = document.getElementById('timeline');
-  container.innerHTML = '';
-
-  if (history.length === 0) return;
-
-  document.getElementById('divider').classList.add('visible');
-
-  history.forEach((entry, i) => {
-    const item = document.createElement('div');
-    item.className = 'timeline-item';
-    item.style.animationDelay = `${i * 60}ms`;
-
-    item.innerHTML = `
-      <div class="timeline-dot"></div>
-      <div class="timeline-content">
-        <div class="timeline-text">${escapeHtml(entry.message)}</div>
-        <div class="timeline-meta">
-          <span class="timeline-time">${formatTime(entry.timestamp)}</span>
-          ${entry.intention ? `<span class="timeline-intention">${escapeHtml(entry.intention)}</span>` : ''}
-          ${entry.source === 'fallback' ? '<span class="timeline-source">オフライン</span>' : ''}
-        </div>
-      </div>
-    `;
-    container.appendChild(item);
-  });
-}
 
 function escapeHtml(str) {
   return str
@@ -255,8 +212,8 @@ async function sendChat() {
 
   const sendBtn = document.getElementById('chatSendBtn');
 
-  if (chatTurns === 0 && isLimitReached()) {
-    disableChatInput('今日分はおわりです。また明日。');
+  if (chatTurns === 0 && isPaywallReached()) {
+    showPaywall();
     return;
   }
 
@@ -273,34 +230,24 @@ async function sendChat() {
     let result;
 
     if (chatTurns === 0) {
-      const canUseAI = checkRateLimit();
-      if (!canUseAI) {
-        const fallbacks = [
-          'やり遂げた。\n誰でもなく、自分が。',
-          'できた。\nこの一歩が、全てだった。',
-          '止まらなかった。\nそれだけで十分。',
-        ];
-        result = { message: fallbacks[Math.floor(Math.random() * fallbacks.length)], source: 'fallback' };
-      } else {
-        const timeOfDay = getTimeOfDay();
-        const streakCount = getStreakCount();
-        const rawHistory = loadHistory();
-        const history = rawHistory.slice(0, 7).map(h => ({
-          intention: h.intention,
-          daysAgo: Math.floor((Date.now() - new Date(h.timestamp).getTime()) / (1000 * 60 * 60 * 24)),
-        }));
-        const daysSinceLastActivity = history.length > 0 ? history[0].daysAgo : null;
+      const timeOfDay = getTimeOfDay();
+      const streakCount = getStreakCount();
+      const rawHistory = loadHistory();
+      const history = rawHistory.slice(0, 7).map(h => ({
+        intention: h.intention,
+        daysAgo: Math.floor((Date.now() - new Date(h.timestamp).getTime()) / (1000 * 60 * 60 * 24)),
+      }));
+      const daysSinceLastActivity = history.length > 0 ? history[0].daysAgo : null;
 
-        result = await fetchMessage({
-          intention: text,
-          streakCount,
-          timeOfDay,
-          isRaining: false,
-          language: 'ja',
-          history,
-          daysSinceLastActivity,
-        });
-      }
+      result = await fetchMessage({
+        intention: text,
+        streakCount,
+        timeOfDay,
+        isRaining: false,
+        language: 'ja',
+        history,
+        daysSinceLastActivity,
+      });
 
       saveHistory({
         id: Date.now(),
@@ -309,7 +256,7 @@ async function sendChat() {
         timestamp: new Date().toISOString(),
         source: result.source || 'ai',
       });
-      incrementTodayCount();
+      incrementTotalSessions();
 
       lastIntention = text;
       lastMessage = result.message;
@@ -336,8 +283,10 @@ async function sendChat() {
 
     if (window.va) window.va('event', { name: 'message_received' });
 
-    if (chatTurns >= MAX_CHAT_TURNS || isLimitReached()) {
-      disableChatInput(isLimitReached() ? '今日分はおわりです。また明日。' : 'また話しかけてきて。');
+    if (chatTurns >= MAX_CHAT_TURNS) {
+      disableChatInput('また話しかけてきて。');
+    } else if (isPaywallReached()) {
+      showPaywall();
     } else {
       sendBtn.disabled = false;
       input.disabled = false;
