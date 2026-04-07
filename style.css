@@ -525,6 +525,125 @@ html, body {
   color: #555;
 }
 
+/* Today Note Input */
+.today-note-group {
+  margin-bottom: 32px;
+}
+
+.today-note-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 0.5px solid var(--border);
+  outline: none;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 300;
+  font-size: 14px;
+  color: var(--text);
+  padding: 8px 0 10px;
+  caret-color: var(--text);
+  transition: border-color 0.2s;
+  resize: none;
+  line-height: 1.6;
+}
+
+.today-note-input:focus {
+  border-bottom-color: var(--text);
+}
+
+.today-note-input::placeholder {
+  color: #c8c8c8;
+}
+
+/* Reply Area */
+.reply-area {
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.reply-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 0.5px solid var(--border);
+  outline: none;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 300;
+  font-size: 14px;
+  color: var(--text);
+  padding: 8px 0 10px;
+  caret-color: var(--text);
+  transition: border-color 0.2s;
+  resize: none;
+  line-height: 1.6;
+}
+
+.reply-input:focus {
+  border-bottom-color: var(--text);
+}
+
+.reply-input::placeholder {
+  color: #c8c8c8;
+}
+
+.reply-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.reply-skip-btn {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+  background: none;
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.reply-skip-btn:hover {
+  border-color: #888;
+  color: #555;
+}
+
+.reply-send-btn {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: #1B3A2D;
+  background: none;
+  border: 0.5px solid #1B3A2D;
+  border-radius: 4px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.reply-send-btn:hover {
+  background: #1B3A2D;
+  color: #FFF9EF;
+}
+
+.reply-send-btn:disabled,
+.reply-skip-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.reply-message {
+  margin-top: 16px;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--text);
+  line-height: 1.7;
+  letter-spacing: 0.03em;
+}
+
 /* Responsive */
 @media (max-width: 360px) {
   :root { --btn-size: 140px; }

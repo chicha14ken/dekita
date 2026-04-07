@@ -258,6 +258,23 @@ async function fireYatta() {
 
   const btn       = document.getElementById('yattaBtn');
   const intention = document.getElementById('intention').value.trim();
+  const todayNote = document.getElementById('todayNote')?.value.trim() || '';
+
+  // Reset reply area from previous session
+  const prevReplyArea = document.getElementById('replyArea');
+  if (prevReplyArea) {
+    prevReplyArea.style.display = 'none';
+    prevReplyArea.style.opacity = '0';
+    document.getElementById('replyInput').value = '';
+    document.getElementById('replyInput').style.display = '';
+    document.getElementById('replyInput').disabled = false;
+    const replyBtns = document.querySelector('.reply-buttons');
+    if (replyBtns) replyBtns.style.display = '';
+    document.querySelector('.reply-send-btn').disabled = false;
+    document.querySelector('.reply-skip-btn').disabled = false;
+    document.getElementById('replyMessage').textContent = '';
+  }
+  replyTurnCount = 0;
 
   // Rate limit check
   const canUseAI = checkRateLimit();
@@ -314,6 +331,7 @@ async function fireYatta() {
   try {
     result = await fetchMessage({
       intention,
+      todayNote,
       streakCount,
       timeOfDay,
       isRaining: false,
@@ -348,20 +366,93 @@ async function fireYatta() {
   lastIntention = intention;
   lastMessage = result.message;
 
-  // 10. Reset input field
+  // 10. Reset input fields
   document.getElementById('intention').value = '';
+  const noteEl = document.getElementById('todayNote');
+  if (noteEl) noteEl.value = '';
 
-  // 11. Show feedback area after 3rd tap
+  // 11. Show reply area
+  setTimeout(() => showReplyArea(), 1000);
+
+  // 12. Show feedback area after 3rd tap
   const updatedHistory = loadHistory();
   if (updatedHistory.length === 3) {
     setTimeout(() => showFeedbackArea(), 1500);
   }
 
-  // 12. Check rate limit — disable button if reached
+  // 13. Check rate limit — disable button if reached
   if (isLimitReached()) {
     showLimitMessage();
   } else {
     btn.disabled = false;
+  }
+}
+
+// ── Reply ─────────────────────────────────────────────────
+
+let replyTurnCount = 0;
+const MAX_REPLY_TURNS = 2;
+
+function showReplyArea() {
+  const area = document.getElementById('replyArea');
+  area.style.display = 'block';
+  area.style.opacity = '0';
+  setTimeout(() => {
+    area.style.transition = 'opacity 0.5s';
+    area.style.opacity = '1';
+  }, 100);
+}
+
+function skipReply() {
+  const area = document.getElementById('replyArea');
+  area.style.transition = 'opacity 0.3s';
+  area.style.opacity = '0';
+  setTimeout(() => { area.style.display = 'none'; }, 300);
+}
+
+async function sendReply() {
+  const input = document.getElementById('replyInput');
+  const userReply = input.value.trim();
+  if (!userReply) return;
+  if (replyTurnCount >= MAX_REPLY_TURNS) return;
+
+  const sendBtn = document.querySelector('.reply-send-btn');
+  const skipBtn = document.querySelector('.reply-skip-btn');
+  sendBtn.disabled = true;
+  skipBtn.disabled = true;
+  input.disabled = true;
+
+  const replyMsgEl = document.getElementById('replyMessage');
+  replyMsgEl.textContent = '考え中…';
+
+  try {
+    const res = await fetch('/api/reply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userReply,
+        originalMessage: lastMessage,
+        challengeName: lastIntention,
+      }),
+    });
+    const data = await res.json();
+    replyMsgEl.textContent = data.message || '';
+    replyTurnCount++;
+    input.value = '';
+
+    if (replyTurnCount >= MAX_REPLY_TURNS) {
+      input.style.display = 'none';
+      document.querySelector('.reply-buttons').style.display = 'none';
+    } else {
+      sendBtn.disabled = false;
+      skipBtn.disabled = false;
+      input.disabled = false;
+    }
+  } catch {
+    replyMsgEl.textContent = 'うまく届きませんでした。';
+    sendBtn.disabled = false;
+    skipBtn.disabled = false;
+    input.disabled = false;
   }
 }
 

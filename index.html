@@ -63,6 +63,17 @@
         />
       </div>
 
+      <div class="input-group today-note-group">
+        <label class="input-label" for="todayNote">今日の気持ち（任意）</label>
+        <textarea
+          id="todayNote"
+          class="today-note-input"
+          placeholder="久しぶりだけど来れた、気分が乗らなかった、など..."
+          rows="2"
+          maxlength="200"
+        ></textarea>
+      </div>
+
       <div class="button-wrap">
         <button class="yatta-btn" id="yattaBtn" onclick="fireYatta()" aria-label="やった！ボタン">
           <span class="yatta-text">できた</span>
@@ -73,6 +84,21 @@
       <div class="message-area" id="messageArea" aria-live="polite">
         <p class="message-main" id="messageMain"></p>
         <p class="message-sub" id="messageSub"></p>
+      </div>
+
+      <div class="reply-area" id="replyArea" style="display:none;">
+        <textarea
+          id="replyInput"
+          class="reply-input"
+          placeholder="返信する..."
+          rows="2"
+          maxlength="200"
+        ></textarea>
+        <div class="reply-buttons">
+          <button class="reply-skip-btn" onclick="skipReply()">スキップ</button>
+          <button class="reply-send-btn" onclick="sendReply()">送信</button>
+        </div>
+        <div class="reply-message" id="replyMessage"></div>
       </div>
 
       <div id="feedbackArea" style="display:none; text-align:center; margin-top:1.5rem;">

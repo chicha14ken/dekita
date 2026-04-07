@@ -83,6 +83,20 @@ NGの例：「また来るの待ってるよ。」「ずっと見てるよ。」
 
 日本語指定時は日本語で書く。`;
 
+const REPLY_SYSTEM_PROMPT = `あなたはDekitaアプリの対話AIです。
+ユーザーが身体的なチャレンジを終えた後、あなたのメッセージへの返信をくれました。
+
+【役割】
+コーチでも評価者でもなく、そばにいる友人として返す。
+ユーザーの言葉をそのまま受け取り、寄り添う。評価・アドバイス・教訓は不要。
+
+【文章のルール】
+1. 1〜2文で収める。長くならない。
+2. ユーザーの言葉をそのまま受け止め、押し返さない。
+3. 話し言葉・友人トーンで書く。
+4. 「すごい」「最高」などの過剰な褒め言葉、絵文字、感嘆符は使わない。
+5. 日本語で書く。`;
+
 // Firebase公開設定をクライアントへ提供するエンドポイント
 // Firebase のクライアントサイドSDK設定値は公開を前提とした値だが、
 // 環境変数経由で管理しコードに直書きしない
@@ -105,7 +119,7 @@ app.get('/api/firebase-config', (req, res) => {
 });
 
 app.post('/api/message', async (req, res) => {
-  const { intention, streakCount, timeOfDay, isRaining, language, history, daysSinceLastActivity } = req.body;
+  const { intention, streakCount, timeOfDay, isRaining, language, history, daysSinceLastActivity, todayNote } = req.body;
 
   const historyLines = Array.isArray(history) && history.length > 0
     ? history.map(h => `  - ${h.daysAgo}日前: ${h.intention}`).join('\n')
@@ -118,6 +132,7 @@ app.post('/api/message', async (req, res) => {
     isRaining ? '天気: 雨' : null,
     daysSinceLastActivity != null ? `最後の活動からの日数: ${daysSinceLastActivity}日` : null,
     historyLines ? `過去の活動履歴:\n${historyLines}` : '過去の活動履歴: なし（初回）',
+    todayNote ? `今日の気持ち（ユーザーの言葉）: ${todayNote}` : null,
     `言語: ${language || 'ja'}`,
   ]
     .filter(Boolean)
@@ -145,6 +160,36 @@ app.post('/api/message', async (req, res) => {
     clearTimeout(timeoutId);
     console.error('[API error]', err?.status, err?.message || err);
     return res.json({ message: getRandomFallback(), source: 'fallback' });
+  }
+});
+
+app.post('/api/reply', async (req, res) => {
+  const { userReply, originalMessage, challengeName } = req.body;
+  if (!userReply) return res.json({ message: 'うん、聞こえてる。' });
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+  try {
+    const response = await client.messages.create(
+      {
+        model: 'claude-sonnet-4-6',
+        max_tokens: 200,
+        system: REPLY_SYSTEM_PROMPT,
+        messages: [
+          { role: 'assistant', content: originalMessage || '' },
+          { role: 'user', content: userReply },
+        ],
+      },
+      { signal: controller.signal }
+    );
+    clearTimeout(timeoutId);
+    const message = response.content[0]?.text?.trim() || 'うん、聞こえてる。';
+    return res.json({ message });
+  } catch (err) {
+    clearTimeout(timeoutId);
+    console.error('[Reply API error]', err?.status, err?.message || err);
+    return res.json({ message: 'うん、聞こえてる。' });
   }
 });
 
