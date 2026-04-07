@@ -176,7 +176,8 @@ function removeThinkingBubble() {
 }
 
 function autoScroll() {
-  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  const el = document.getElementById('chatHistory');
+  if (el) el.scrollTop = el.scrollHeight;
 }
 
 function autoResizeTextarea(el) {
@@ -309,7 +310,6 @@ async function sendChat() {
         source: result.source || 'ai',
       });
       incrementTodayCount();
-      renderTimeline();
 
       lastIntention = text;
       lastMessage = result.message;
@@ -399,14 +399,71 @@ async function submitFeedback() {
     '<p style="font-size:12px; color:#888;">ありがとうございます。</p>';
 }
 
+// ── Tab switching ───────────────────────────────────────────
+
+function switchTab(tab) {
+  document.getElementById('viewChat').classList.toggle('hidden', tab !== 'chat');
+  document.getElementById('viewHistory').classList.toggle('hidden', tab !== 'history');
+  document.getElementById('tabChat').classList.toggle('active', tab === 'chat');
+  document.getElementById('tabHistory').classList.toggle('active', tab === 'history');
+  if (tab === 'history') renderHistoryView();
+}
+
+// ── History View ────────────────────────────────────────────
+
+function renderHistoryView() {
+  const history = loadHistory();
+  const container = document.getElementById('historyList');
+  container.innerHTML = '';
+
+  if (history.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'history-empty';
+    empty.textContent = 'まだ記録がありません。';
+    container.appendChild(empty);
+    return;
+  }
+
+  // Group by date
+  const grouped = new Map();
+  history.forEach(entry => {
+    const d = new Date(entry.timestamp);
+    const label = d.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' });
+    if (!grouped.has(label)) grouped.set(label, []);
+    grouped.get(label).push(entry);
+  });
+
+  grouped.forEach((entries, dateLabel) => {
+    const group = document.createElement('div');
+    group.className = 'history-group';
+
+    const dateEl = document.createElement('div');
+    dateEl.className = 'history-date';
+    dateEl.textContent = dateLabel;
+    group.appendChild(dateEl);
+
+    entries.forEach(entry => {
+      const entryEl = document.createElement('div');
+      entryEl.className = 'history-entry';
+      entryEl.innerHTML = `
+        <div class="history-user-msg">${escapeHtml(entry.intention || '')}</div>
+        <div class="history-ai-msg">${escapeHtml(entry.message || '')}</div>
+        <div class="history-time">${formatTime(entry.timestamp)}</div>
+      `;
+      group.appendChild(entryEl);
+    });
+
+    container.appendChild(group);
+  });
+}
+
 // ── グローバル公開 ──────────────────────────────────────────
 
-window.renderTimeline = renderTimeline;
+window.renderTimeline = renderHistoryView;
 
 // ── Init ───────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
-  renderTimeline();
   applyRateLimitUI();
 
   const chatInput = document.getElementById('chatInput');

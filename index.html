@@ -4,59 +4,58 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#1B3A2D" />
-  <meta name="description" content="AIが、あなたの努力を見届ける。身体的な挑戦の証人になります。" />
+  <meta name="description" content="AIが、あなたの「できた」の証人になる。" />
   <title>Dekita — できた</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="alternate icon" href="/favicon.ico">
   <link rel="apple-touch-icon" href="/icon-192.png">
   <link rel="manifest" href="/manifest.json">
   <meta property="og:title" content="Dekita — できた">
-  <meta property="og:description" content="AIが、あなたの努力を見届ける。身体的な挑戦の証人になります。">
+  <meta property="og:description" content="AIが、あなたの「できた」の証人になる。">
   <meta property="og:image" content="https://dekita-nine.vercel.app/ogp.png">
   <meta property="og:url" content="https://dekita-nine.vercel.app">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Dekita — できた">
-  <meta name="twitter:description" content="AIが、あなたの努力を見届ける。身体的な挑戦の証人になります。">
+  <meta name="twitter:description" content="AIが、あなたの「できた」の証人になる。">
   <meta name="twitter:image" content="https://dekita-nine.vercel.app/ogp.png">
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@900&family=Noto+Sans+JP:wght@300;400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/style.css" />
   <script defer src="/_vercel/insights/script.js"></script>
-  <!-- Firebase SDK (CDN) -->
   <script type="module" src="/firebase-auth.js"></script>
 </head>
 <body>
-  <section class="hero">
-    <h1>誰も見ていない場所でも、<br>あなたの努力を見ている。</h1>
-    <p class="hero-sub">あなたの「できた」の証人になる。</p>
-    <div class="hero-ctas">
-      <a href="#challenge" class="cta-primary">今日のチャレンジを始める</a>
-      <a href="#about" class="cta-secondary">Dekitaとは?</a>
-    </div>
-  </section>
 
-  <div class="app">
-    <!-- 認証バー -->
-    <div class="auth-bar" id="authBar">
-      <div id="authGuest" class="auth-guest">
-        <button class="auth-login-btn" id="loginBtn" onclick="handleGoogleLogin()">Googleでログイン</button>
-      </div>
-      <div id="authUser" class="auth-user" style="display:none;">
-        <img class="auth-avatar" id="authAvatar" src="" alt="" width="28" height="28" />
-        <span class="auth-name" id="authName"></span>
-        <button class="auth-logout-btn" id="logoutBtn" onclick="handleLogout()">ログアウト</button>
-      </div>
-    </div>
+  <div class="app-shell">
 
-    <main class="app-main" id="challenge">
+    <!-- ヘッダー -->
+    <header class="app-header">
+      <span class="app-logo">Dekita</span>
+      <div class="header-tabs">
+        <button class="tab-btn active" id="tabChat" onclick="switchTab('chat')">話す</button>
+        <button class="tab-btn" id="tabHistory" onclick="switchTab('history')">履歴</button>
+      </div>
+      <div id="authBar" class="auth-bar">
+        <div id="authGuest" class="auth-guest">
+          <button class="auth-login-btn" id="loginBtn" onclick="handleGoogleLogin()">ログイン</button>
+        </div>
+        <div id="authUser" class="auth-user" style="display:none;">
+          <img class="auth-avatar" id="authAvatar" src="" alt="" width="24" height="24" />
+          <button class="auth-logout-btn" id="logoutBtn" onclick="handleLogout()">ログアウト</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 話すビュー -->
+    <div class="view" id="viewChat">
       <div class="chat-history" id="chatHistory"></div>
       <div class="chat-input-area" id="chatInputArea">
         <textarea
           id="chatInput"
           class="chat-input"
-          placeholder="今日できたことを話してみて"
+          placeholder="できたことを話してみて"
           rows="1"
           maxlength="300"
         ></textarea>
@@ -66,75 +65,28 @@
           </svg>
         </button>
       </div>
-    </main>
-
-    <div id="feedbackArea" style="display:none; text-align:center; margin-top:1rem;">
-      <p style="font-size:12px; color:#888; margin-bottom:10px;">
-        メッセージ、刺さりましたか？
-      </p>
-      <div id="feedbackButtons" style="display:flex; justify-content:center; gap:12px; margin-bottom:12px;">
-        <button onclick="selectFeedback('great')"
-          style="font-size:20px; background:none; border:0.5px solid #ccc;
-                 border-radius:50%; width:44px; height:44px; cursor:pointer;">
-          😍
-        </button>
-        <button onclick="selectFeedback('ok')"
-          style="font-size:20px; background:none; border:0.5px solid #ccc;
-                 border-radius:50%; width:44px; height:44px; cursor:pointer;">
-          😐
-        </button>
-        <button onclick="selectFeedback('miss')"
-          style="font-size:20px; background:none; border:0.5px solid #ccc;
-                 border-radius:50%; width:44px; height:44px; cursor:pointer;">
-          🤔
-        </button>
-      </div>
-      <div id="feedbackComment" style="display:none; padding:0 1rem;">
-        <input type="text" id="feedbackText"
-          placeholder="よかったらもう少し教えてください（任意）"
-          style="width:100%; font-size:13px; padding:8px;
-                 border:0.5px solid #ccc; border-radius:4px; margin-bottom:8px; box-sizing:border-box;">
-        <button onclick="submitFeedback()"
-          style="font-size:12px; color:#888; background:none;
-                 border:0.5px solid #ccc; padding:6px 16px;
-                 border-radius:4px; cursor:pointer;">
-          送る
-        </button>
-      </div>
     </div>
 
-    <hr class="divider" id="divider" />
-    <section class="timeline" id="timeline" aria-label="履歴"></section>
+    <!-- 履歴ビュー -->
+    <div class="view hidden" id="viewHistory">
+      <div class="history-list" id="historyList"></div>
+    </div>
+
   </div>
 
-  <section class="about" id="about">
-    <h2 class="about-title">Dekitaとは?</h2>
-    <p class="about-desc">AIが、あなたの「できた」の証人になります。</p>
-    <ol class="about-steps">
-      <li class="about-step">
-        <span class="step-num">1</span>
-        <div class="step-body">
-          <strong>今日のチャレンジを入力</strong>
-          <p>「3km走る」「腕立て20回」など、今日やりたいことを書くだけ。</p>
-        </div>
-      </li>
-      <li class="about-step">
-        <span class="step-num">2</span>
-        <div class="step-body">
-          <strong>AIが証人になり、メッセージをくれる</strong>
-          <p>できた瞬間にボタンを押すと、AIがあなたの努力を認めるメッセージを届けます。</p>
-        </div>
-      </li>
-      <li class="about-step">
-        <span class="step-num">3</span>
-        <div class="step-body">
-          <strong>「できた」の記録が積み重なる</strong>
-          <p>毎日の積み重ねがタイムラインに残り、自分の成長を可視化できます。</p>
-        </div>
-      </li>
-    </ol>
-    <a href="#challenge" class="cta-primary about-cta">今日のチャレンジを始める</a>
-  </section>
+  <!-- フィードバック（フローティング） -->
+  <div id="feedbackArea" style="display:none;">
+    <p class="feedback-label">メッセージ、刺さりましたか？</p>
+    <div id="feedbackButtons" class="feedback-buttons">
+      <button onclick="selectFeedback('great')">😍</button>
+      <button onclick="selectFeedback('ok')">😐</button>
+      <button onclick="selectFeedback('miss')">🤔</button>
+    </div>
+    <div id="feedbackComment" style="display:none;">
+      <input type="text" id="feedbackText" placeholder="よかったらもう少し教えてください（任意）" />
+      <button onclick="submitFeedback()" class="feedback-submit">送る</button>
+    </div>
+  </div>
 
   <script src="/app.js"></script>
 </body>
