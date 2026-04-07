@@ -525,6 +525,130 @@ html, body {
   color: #555;
 }
 
+/* Chat UI */
+.app-main {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 60vh;
+}
+
+.chat-history {
+  flex: 1;
+  padding: 8px 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chat-input-area {
+  position: sticky;
+  bottom: 0;
+  background: var(--bg);
+  padding: 12px 0 8px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  border-top: 0.5px solid #e8e8e8;
+}
+
+.chat-input-area.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.chat-input {
+  flex: 1;
+  background: #f0f0ee;
+  border: none;
+  border-radius: 20px;
+  outline: none;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 300;
+  font-size: 15px;
+  color: var(--text);
+  padding: 10px 16px;
+  resize: none;
+  line-height: 1.5;
+  max-height: 120px;
+  overflow-y: auto;
+  caret-color: var(--text);
+}
+
+.chat-input::placeholder {
+  color: #bbb;
+}
+
+.chat-send-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #1B3A2D;
+  color: #FFF9EF;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: opacity 0.2s;
+}
+
+.chat-send-btn:hover {
+  opacity: 0.85;
+}
+
+.chat-send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Bubbles */
+.bubble-wrap {
+  display: flex;
+  flex-direction: column;
+  animation: fade-in 0.3s ease forwards;
+}
+
+.bubble-wrap.user {
+  align-items: flex-end;
+}
+
+.bubble-wrap.ai {
+  align-items: flex-start;
+}
+
+.bubble {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 15px;
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+  white-space: pre-wrap;
+}
+
+.bubble.user {
+  background: #1B3A2D;
+  color: #FFF9EF;
+  border-bottom-right-radius: 4px;
+}
+
+.bubble.ai {
+  background: #fff;
+  color: var(--text);
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.bubble.thinking {
+  color: var(--muted);
+  font-size: 13px;
+  background: #f0f0ee;
+  box-shadow: none;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
 /* Today Note Input */
 .today-note-group {
   margin-bottom: 32px;

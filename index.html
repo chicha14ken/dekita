@@ -51,96 +51,60 @@
     </div>
 
     <main class="app-main" id="challenge">
-      <div class="input-group">
-        <label class="input-label" for="intention">今日のチャレンジ</label>
-        <input
-          id="intention"
-          class="intention-input"
-          type="text"
-          placeholder="例：3km走る、腕立て20回..."
-          autocomplete="off"
-          maxlength="100"
-        />
-      </div>
-
-      <div class="input-group today-note-group">
-        <label class="input-label" for="todayNote">今日の気持ち（任意）</label>
+      <div class="chat-history" id="chatHistory"></div>
+      <div class="chat-input-area" id="chatInputArea">
         <textarea
-          id="todayNote"
-          class="today-note-input"
-          placeholder="久しぶりだけど来れた、気分が乗らなかった、など..."
-          rows="2"
-          maxlength="200"
+          id="chatInput"
+          class="chat-input"
+          placeholder="今日できたことを話してみて"
+          rows="1"
+          maxlength="300"
         ></textarea>
-      </div>
-
-      <div class="button-wrap">
-        <button class="yatta-btn" id="yattaBtn" onclick="fireYatta()" aria-label="やった！ボタン">
-          <span class="yatta-text">できた</span>
-          <span class="ripple" id="ripple"></span>
+        <button class="chat-send-btn" id="chatSendBtn" onclick="sendChat()" aria-label="送信">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 13V3M8 3L4 7M8 3L12 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </button>
       </div>
-
-      <div class="message-area" id="messageArea" aria-live="polite">
-        <p class="message-main" id="messageMain"></p>
-        <p class="message-sub" id="messageSub"></p>
-      </div>
-
-      <div class="reply-area" id="replyArea" style="display:none;">
-        <textarea
-          id="replyInput"
-          class="reply-input"
-          placeholder="返信する..."
-          rows="2"
-          maxlength="200"
-        ></textarea>
-        <div class="reply-buttons">
-          <button class="reply-skip-btn" onclick="skipReply()">スキップ</button>
-          <button class="reply-send-btn" onclick="sendReply()">送信</button>
-        </div>
-        <div class="reply-message" id="replyMessage"></div>
-      </div>
-
-      <div id="feedbackArea" style="display:none; text-align:center; margin-top:1.5rem;">
-        <p style="font-size:12px; color:#888; margin-bottom:10px;">
-          メッセージ、刺さりましたか？
-        </p>
-        <div id="feedbackButtons" style="display:flex; justify-content:center; gap:12px; margin-bottom:12px;">
-          <button onclick="selectFeedback('great')"
-            style="font-size:20px; background:none; border:0.5px solid #ccc;
-                   border-radius:50%; width:44px; height:44px; cursor:pointer;">
-            😍
-          </button>
-          <button onclick="selectFeedback('ok')"
-            style="font-size:20px; background:none; border:0.5px solid #ccc;
-                   border-radius:50%; width:44px; height:44px; cursor:pointer;">
-            😐
-          </button>
-          <button onclick="selectFeedback('miss')"
-            style="font-size:20px; background:none; border:0.5px solid #ccc;
-                   border-radius:50%; width:44px; height:44px; cursor:pointer;">
-            🤔
-          </button>
-        </div>
-        <div id="feedbackComment" style="display:none; padding:0 1rem;">
-          <input type="text" id="feedbackText"
-            placeholder="よかったらもう少し教えてください（任意）"
-            style="width:100%; font-size:13px; padding:8px;
-                   border:0.5px solid #ccc; border-radius:4px; margin-bottom:8px; box-sizing:border-box;">
-          <button onclick="submitFeedback()"
-            style="font-size:12px; color:#888; background:none;
-                   border:0.5px solid #ccc; padding:6px 16px;
-                   border-radius:4px; cursor:pointer;">
-            送る
-          </button>
-        </div>
-      </div>
-
-      <hr class="divider" id="divider" />
-
-      <section class="timeline" id="timeline" aria-label="履歴">
-      </section>
     </main>
+
+    <div id="feedbackArea" style="display:none; text-align:center; margin-top:1rem;">
+      <p style="font-size:12px; color:#888; margin-bottom:10px;">
+        メッセージ、刺さりましたか？
+      </p>
+      <div id="feedbackButtons" style="display:flex; justify-content:center; gap:12px; margin-bottom:12px;">
+        <button onclick="selectFeedback('great')"
+          style="font-size:20px; background:none; border:0.5px solid #ccc;
+                 border-radius:50%; width:44px; height:44px; cursor:pointer;">
+          😍
+        </button>
+        <button onclick="selectFeedback('ok')"
+          style="font-size:20px; background:none; border:0.5px solid #ccc;
+                 border-radius:50%; width:44px; height:44px; cursor:pointer;">
+          😐
+        </button>
+        <button onclick="selectFeedback('miss')"
+          style="font-size:20px; background:none; border:0.5px solid #ccc;
+                 border-radius:50%; width:44px; height:44px; cursor:pointer;">
+          🤔
+        </button>
+      </div>
+      <div id="feedbackComment" style="display:none; padding:0 1rem;">
+        <input type="text" id="feedbackText"
+          placeholder="よかったらもう少し教えてください（任意）"
+          style="width:100%; font-size:13px; padding:8px;
+                 border:0.5px solid #ccc; border-radius:4px; margin-bottom:8px; box-sizing:border-box;">
+        <button onclick="submitFeedback()"
+          style="font-size:12px; color:#888; background:none;
+                 border:0.5px solid #ccc; padding:6px 16px;
+                 border-radius:4px; cursor:pointer;">
+          送る
+        </button>
+      </div>
+    </div>
+
+    <hr class="divider" id="divider" />
+    <section class="timeline" id="timeline" aria-label="履歴"></section>
   </div>
 
   <section class="about" id="about">

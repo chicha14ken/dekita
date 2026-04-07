@@ -4,6 +4,7 @@ const HISTORY_KEY = 'dekita_history';
 const MAX_HISTORY = 7;
 const RATE_KEY = 'dekita_rate';
 const DAILY_LIMIT = 5;
+const MAX_CHAT_TURNS = 3;
 
 // ── Utilities ──────────────────────────────────────────────
 
@@ -23,7 +24,6 @@ function getStreakCount() {
   const yesterday = new Date(Date.now() - 86400000).toDateString();
   const dates = history.map(h => new Date(h.timestamp).toDateString());
 
-  // Count streak from today backwards
   let streak = 1;
   if (dates.includes(today) || dates.includes(yesterday)) {
     const uniqueDates = [...new Set(dates)].sort((a, b) => new Date(b) - new Date(a));
@@ -50,7 +50,6 @@ function saveHistory(entry) {
   const history = loadHistory();
   history.unshift(entry);
   localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, MAX_HISTORY)));
-  // ログイン済みの場合はFirestoreにも保存（firebase-auth.jsが提供）
   if (typeof window.saveToFirestore === 'function' && typeof window.isLoggedIn === 'function' && window.isLoggedIn()) {
     window.saveToFirestore(entry);
   }
@@ -81,7 +80,6 @@ function incrementTodayCount() {
     const data = JSON.parse(localStorage.getItem(RATE_KEY) || '{}');
     const key = getTodayKey();
     data[key] = (data[key] || 0) + 1;
-    // Remove old date entries
     Object.keys(data).forEach(k => { if (k !== key) delete data[k]; });
     localStorage.setItem(RATE_KEY, JSON.stringify(data));
   } catch {}
@@ -91,32 +89,20 @@ function isLimitReached() {
   return getTodayCount() >= DAILY_LIMIT;
 }
 
-function applyRateLimitUI() {
-  const btn = document.getElementById('yattaBtn');
-  if (isLimitReached()) {
-    btn.disabled = true;
-    showLimitMessage();
-  } else {
-    btn.disabled = false;
-  }
+function checkRateLimit() {
+  const today = new Date().toISOString().split('T')[0];
+  const key = 'dekita_usage_' + today;
+  const count = parseInt(localStorage.getItem(key) || '0');
+  if (count >= DAILY_LIMIT) return false;
+  localStorage.setItem(key, count + 1);
+  return true;
 }
 
-function showLimitMessage() {
-  const mainEl = document.getElementById('messageMain');
-  const subEl  = document.getElementById('messageSub');
-  mainEl.className = 'message-main visible limit-msg';
-  mainEl.textContent = '今日分のメッセージはおわりです。また明日。';
-  subEl.className = 'message-sub';
-  subEl.textContent = '';
-  document.getElementById('divider').classList.add('visible');
-}
-
-// ── Fetch with timeout ─────────────────────────────────────
+// ── Fetch ──────────────────────────────────────────────────
 
 async function fetchMessage(payload) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000);
-
   try {
     const res = await fetch('/api/message', {
       method: 'POST',
@@ -133,70 +119,90 @@ async function fetchMessage(payload) {
   }
 }
 
-// ── UI helpers ─────────────────────────────────────────────
-
-function showThinking() {
-  const mainEl = document.getElementById('messageMain');
-  const subEl  = document.getElementById('messageSub');
-  mainEl.className = 'message-main thinking visible';
-  mainEl.textContent = '考え中…';
-  subEl.className = 'message-sub';
-  subEl.textContent = '';
-}
-
-function showMessage(text) {
-  const mainEl = document.getElementById('messageMain');
-  const subEl  = document.getElementById('messageSub');
-
-  // Split on newline if present (main + sub)
-  const parts = text.split('\n');
-  const mainText = parts[0] || '';
-  const subText  = parts.slice(1).join('\n') || '';
-
-  mainEl.className = 'message-main';
-  mainEl.textContent = mainText;
-  subEl.className = 'message-sub';
-  subEl.textContent = subText;
-
-  // Show divider
-  document.getElementById('divider').classList.add('visible');
-
-  // Trigger animation on next frame
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      mainEl.classList.add('visible');
-      if (subText) subEl.classList.add('visible');
-      // Track message display completion
-      if (window.va) window.va('event', { name: 'message_received' });
+async function fetchReply(payload) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  try {
+    const res = await fetch('/api/reply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
     });
-  });
+    clearTimeout(timeoutId);
+    if (!res.ok) throw new Error('server error');
+    return await res.json();
+  } catch {
+    clearTimeout(timeoutId);
+    throw new Error('fetch failed');
+  }
 }
 
-function showFeedbackThanks() {
-  const area = document.getElementById('feedbackArea');
-  if (!area) return;
-  area.innerHTML = '<p style="font-size:12px; color:#888;">ありがとうございます。</p>';
-  area.style.transition = '';
-  area.style.opacity = '1';
-  area.style.display = '';
+// ── Chat UI helpers ─────────────────────────────────────────
 
-  setTimeout(() => {
-    area.style.transition = 'opacity 0.8s';
-    area.style.opacity = '0';
-    setTimeout(() => { area.style.display = 'none'; }, 800);
-  }, 3000);
+function appendBubble(type, text) {
+  const historyEl = document.getElementById('chatHistory');
+  const wrap = document.createElement('div');
+  wrap.className = `bubble-wrap ${type}`;
+
+  const bubble = document.createElement('div');
+  bubble.className = `bubble ${type}`;
+  bubble.textContent = text;
+
+  wrap.appendChild(bubble);
+  historyEl.appendChild(wrap);
+  autoScroll();
+  return wrap;
 }
 
-function triggerRipple(btn) {
-  const ripple = document.getElementById('ripple');
-  ripple.style.width  = `${btn.offsetWidth}px`;
-  ripple.style.height = `${btn.offsetWidth}px`;
-  ripple.style.left   = '0px';
-  ripple.style.top    = '0px';
-  ripple.classList.remove('animate');
-  void ripple.offsetWidth; // reflow
-  ripple.classList.add('animate');
+function appendThinkingBubble() {
+  const historyEl = document.getElementById('chatHistory');
+  const wrap = document.createElement('div');
+  wrap.className = 'bubble-wrap ai';
+  wrap.id = 'thinkingBubble';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble ai thinking';
+  bubble.textContent = '考え中…';
+
+  wrap.appendChild(bubble);
+  historyEl.appendChild(wrap);
+  autoScroll();
 }
+
+function removeThinkingBubble() {
+  const el = document.getElementById('thinkingBubble');
+  if (el) el.remove();
+}
+
+function autoScroll() {
+  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+}
+
+function autoResizeTextarea(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function disableChatInput(placeholderMsg) {
+  const inputArea = document.getElementById('chatInputArea');
+  const input = document.getElementById('chatInput');
+  const btn = document.getElementById('chatSendBtn');
+  if (inputArea) inputArea.classList.add('disabled');
+  if (input) {
+    input.disabled = true;
+    if (placeholderMsg) input.placeholder = placeholderMsg;
+  }
+  if (btn) btn.disabled = true;
+}
+
+function applyRateLimitUI() {
+  if (isLimitReached()) {
+    disableChatInput('今日分はおわりです。また明日。');
+  }
+}
+
+// ── Timeline ────────────────────────────────────────────────
 
 function renderTimeline() {
   const history = loadHistory();
@@ -212,13 +218,10 @@ function renderTimeline() {
     item.className = 'timeline-item';
     item.style.animationDelay = `${i * 60}ms`;
 
-    const parts = entry.message.split('\n');
-    const displayText = parts.join('\n');
-
     item.innerHTML = `
       <div class="timeline-dot"></div>
       <div class="timeline-content">
-        <div class="timeline-text">${escapeHtml(displayText)}</div>
+        <div class="timeline-text">${escapeHtml(entry.message)}</div>
         <div class="timeline-meta">
           <span class="timeline-time">${formatTime(entry.timestamp)}</span>
           ${entry.intention ? `<span class="timeline-intention">${escapeHtml(entry.intention)}</span>` : ''}
@@ -238,220 +241,113 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
-// ── Rate limiting ─────────────────────────────────────────
+// ── Main Chat Action ────────────────────────────────────────
 
-function checkRateLimit() {
-  const today = new Date().toISOString().split('T')[0];
-  const key = 'dekita_usage_' + today;
-  const count = parseInt(localStorage.getItem(key) || '0');
-  const DAILY_LIMIT = 5;
-  if (count >= DAILY_LIMIT) return false;
-  localStorage.setItem(key, count + 1);
-  return true;
-}
+let chatTurns = 0;
+let lastIntention = '';
+let lastMessage = '';
 
-// ── Main action ────────────────────────────────────────────
+async function sendChat() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
 
-async function fireYatta() {
-  // Rate limit check
-  if (isLimitReached()) return;
+  const sendBtn = document.getElementById('chatSendBtn');
 
-  const btn       = document.getElementById('yattaBtn');
-  const intention = document.getElementById('intention').value.trim();
-  const todayNote = document.getElementById('todayNote')?.value.trim() || '';
-
-  // Reset reply area from previous session
-  const prevReplyArea = document.getElementById('replyArea');
-  if (prevReplyArea) {
-    prevReplyArea.style.display = 'none';
-    prevReplyArea.style.opacity = '0';
-    document.getElementById('replyInput').value = '';
-    document.getElementById('replyInput').style.display = '';
-    document.getElementById('replyInput').disabled = false;
-    const replyBtns = document.querySelector('.reply-buttons');
-    if (replyBtns) replyBtns.style.display = '';
-    document.querySelector('.reply-send-btn').disabled = false;
-    document.querySelector('.reply-skip-btn').disabled = false;
-    document.getElementById('replyMessage').textContent = '';
-  }
-  replyTurnCount = 0;
-
-  // Rate limit check
-  const canUseAI = checkRateLimit();
-  if (!canUseAI) {
-    const fallbacks = [
-      ["やり遂げた。", "誰でもなく、自分が。"],
-      ["できた。", "この一歩が、全てだった。"],
-      ["止まらなかった。", "それだけで十分。"]
-    ];
-    const pair = fallbacks[Math.floor(Math.random() * fallbacks.length)];
-    showMessage(pair[0] + '\n' + pair[1]);
-    setTimeout(() => {
-      const sub = document.getElementById('messageSub');
-      if (sub) sub.textContent = '今日分のメッセージは終わりです。また明日。';
-    }, 2000);
-    saveHistory({
-      id: Date.now(),
-      intention: intention || '今日も何かやった',
-      message: pair[0] + ' ' + pair[1],
-      timestamp: new Date().toISOString(),
-      source: 'rate-limited',
-    });
-    renderTimeline();
+  if (chatTurns === 0 && isLimitReached()) {
+    disableChatInput('今日分はおわりです。また明日。');
     return;
   }
 
-  // Track challenge submission
-  if (window.va) window.va('event', { name: 'challenge_submit' });
-
-  // 1. Button animation
-  btn.classList.remove('popping');
-  void btn.offsetWidth;
-  btn.classList.add('popping');
-  triggerRipple(btn);
-  btn.disabled = true;
-
-  // 2. Show "thinking"
-  showThinking();
-
-  // 3. Gather context
-  const timeOfDay   = getTimeOfDay();
-  const streakCount = getStreakCount();
-
-  // Build history payload from localStorage
-  const rawHistory = loadHistory();
-  const history = rawHistory.slice(0, 7).map(h => ({
-    intention: h.intention,
-    daysAgo: Math.floor((Date.now() - new Date(h.timestamp).getTime()) / (1000 * 60 * 60 * 24)),
-  }));
-  const daysSinceLastActivity = history.length > 0 ? history[0].daysAgo : null;
-
-  // 4. Fetch AI message (3s timeout also set server-side)
-  let result;
-  try {
-    result = await fetchMessage({
-      intention,
-      todayNote,
-      streakCount,
-      timeOfDay,
-      isRaining: false,
-      language: 'ja',
-      history,
-      daysSinceLastActivity,
-    });
-  } catch {
-    result = { message: 'できた。\nここまで来た。', source: 'fallback' };
-  }
-
-  // 5. Show message with animation
-  showMessage(result.message);
-
-  // 6. Save to localStorage
-  const entry = {
-    id: Date.now(),
-    intention,
-    message: result.message,
-    timestamp: new Date().toISOString(),
-    source: result.source,
-  };
-  saveHistory(entry);
-
-  // 7. Increment rate limit count
-  incrementTodayCount();
-
-  // 8. Re-render timeline
-  renderTimeline();
-
-  // 9. Track for feedback
-  lastIntention = intention;
-  lastMessage = result.message;
-
-  // 10. Reset input fields
-  document.getElementById('intention').value = '';
-  const noteEl = document.getElementById('todayNote');
-  if (noteEl) noteEl.value = '';
-
-  // 11. Show reply area
-  setTimeout(() => showReplyArea(), 1000);
-
-  // 12. Show feedback area after 3rd tap
-  const updatedHistory = loadHistory();
-  if (updatedHistory.length === 3) {
-    setTimeout(() => showFeedbackArea(), 1500);
-  }
-
-  // 13. Check rate limit — disable button if reached
-  if (isLimitReached()) {
-    showLimitMessage();
-  } else {
-    btn.disabled = false;
-  }
-}
-
-// ── Reply ─────────────────────────────────────────────────
-
-let replyTurnCount = 0;
-const MAX_REPLY_TURNS = 2;
-
-function showReplyArea() {
-  const area = document.getElementById('replyArea');
-  area.style.display = 'block';
-  area.style.opacity = '0';
-  setTimeout(() => {
-    area.style.transition = 'opacity 0.5s';
-    area.style.opacity = '1';
-  }, 100);
-}
-
-function skipReply() {
-  const area = document.getElementById('replyArea');
-  area.style.transition = 'opacity 0.3s';
-  area.style.opacity = '0';
-  setTimeout(() => { area.style.display = 'none'; }, 300);
-}
-
-async function sendReply() {
-  const input = document.getElementById('replyInput');
-  const userReply = input.value.trim();
-  if (!userReply) return;
-  if (replyTurnCount >= MAX_REPLY_TURNS) return;
-
-  const sendBtn = document.querySelector('.reply-send-btn');
-  const skipBtn = document.querySelector('.reply-skip-btn');
   sendBtn.disabled = true;
-  skipBtn.disabled = true;
   input.disabled = true;
 
-  const replyMsgEl = document.getElementById('replyMessage');
-  replyMsgEl.textContent = '考え中…';
+  appendBubble('user', text);
+  input.value = '';
+  autoResizeTextarea(input);
+
+  appendThinkingBubble();
 
   try {
-    const res = await fetch('/api/reply', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userReply,
+    let result;
+
+    if (chatTurns === 0) {
+      const canUseAI = checkRateLimit();
+      if (!canUseAI) {
+        const fallbacks = [
+          'やり遂げた。\n誰でもなく、自分が。',
+          'できた。\nこの一歩が、全てだった。',
+          '止まらなかった。\nそれだけで十分。',
+        ];
+        result = { message: fallbacks[Math.floor(Math.random() * fallbacks.length)], source: 'fallback' };
+      } else {
+        const timeOfDay = getTimeOfDay();
+        const streakCount = getStreakCount();
+        const rawHistory = loadHistory();
+        const history = rawHistory.slice(0, 7).map(h => ({
+          intention: h.intention,
+          daysAgo: Math.floor((Date.now() - new Date(h.timestamp).getTime()) / (1000 * 60 * 60 * 24)),
+        }));
+        const daysSinceLastActivity = history.length > 0 ? history[0].daysAgo : null;
+
+        result = await fetchMessage({
+          intention: text,
+          streakCount,
+          timeOfDay,
+          isRaining: false,
+          language: 'ja',
+          history,
+          daysSinceLastActivity,
+        });
+      }
+
+      saveHistory({
+        id: Date.now(),
+        intention: text,
+        message: result.message,
+        timestamp: new Date().toISOString(),
+        source: result.source || 'ai',
+      });
+      incrementTodayCount();
+      renderTimeline();
+
+      lastIntention = text;
+      lastMessage = result.message;
+
+      if (window.va) window.va('event', { name: 'challenge_submit' });
+
+      const updatedHistory = loadHistory();
+      if (updatedHistory.length === 3) {
+        setTimeout(() => showFeedbackArea(), 2000);
+      }
+
+    } else {
+      result = await fetchReply({
+        userReply: text,
         originalMessage: lastMessage,
         challengeName: lastIntention,
-      }),
-    });
-    const data = await res.json();
-    replyMsgEl.textContent = data.message || '';
-    replyTurnCount++;
-    input.value = '';
+      });
+      lastMessage = result.message;
+    }
 
-    if (replyTurnCount >= MAX_REPLY_TURNS) {
-      input.style.display = 'none';
-      document.querySelector('.reply-buttons').style.display = 'none';
+    removeThinkingBubble();
+    appendBubble('ai', result.message);
+    chatTurns++;
+
+    if (window.va) window.va('event', { name: 'message_received' });
+
+    if (chatTurns >= MAX_CHAT_TURNS || isLimitReached()) {
+      disableChatInput(isLimitReached() ? '今日分はおわりです。また明日。' : 'また話しかけてきて。');
     } else {
       sendBtn.disabled = false;
-      skipBtn.disabled = false;
       input.disabled = false;
+      input.focus();
     }
+
   } catch {
-    replyMsgEl.textContent = 'うまく届きませんでした。';
+    removeThinkingBubble();
+    appendBubble('ai', 'うまく届きませんでした。もう一度試してみてください。');
     sendBtn.disabled = false;
-    skipBtn.disabled = false;
     input.disabled = false;
   }
 }
@@ -459,8 +355,6 @@ async function sendReply() {
 // ── Feedback ──────────────────────────────────────────────
 
 let currentFeedbackRating = null;
-let lastIntention = '';
-let lastMessage = '';
 
 function showFeedbackArea() {
   const area = document.getElementById('feedbackArea');
@@ -492,11 +386,11 @@ async function submitFeedback() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         rating: currentFeedbackRating,
-        comment: comment,
+        comment,
         intention: lastIntention,
         message: lastMessage,
-        streakCount: getStreakCount()
-      })
+        streakCount: getStreakCount(),
+      }),
     });
   } catch (e) {
     console.log('feedback error', e);
@@ -505,7 +399,7 @@ async function submitFeedback() {
     '<p style="font-size:12px; color:#888;">ありがとうございます。</p>';
 }
 
-// ── グローバル公開（firebase-auth.jsから呼び出し可能にする）──
+// ── グローバル公開 ──────────────────────────────────────────
 
 window.renderTimeline = renderTimeline;
 
@@ -515,12 +409,19 @@ document.addEventListener('DOMContentLoaded', () => {
   renderTimeline();
   applyRateLimitUI();
 
-  // Allow Enter key to trigger
-  document.getElementById('intention').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') fireYatta();
-  });
+  const chatInput = document.getElementById('chatInput');
+  if (chatInput) {
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.isComposing && !e.shiftKey) {
+        e.preventDefault();
+        sendChat();
+      }
+    });
+    chatInput.addEventListener('input', () => {
+      autoResizeTextarea(chatInput);
+    });
+  }
 
-  // Register service worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
