@@ -174,16 +174,15 @@ async function loadFromFirestoreAndRender(uid) {
     const snapshot = await getDocs(q);
     const entries = snapshot.docs.map(d => d.data());
 
-    // app.jsのrenderTimelineがlocalStorageを参照するため、
-    // Firestoreのデータをlocalへ反映してから再描画する
+    // Firestoreのデータをlocalへ反映
     if (entries.length > 0) {
       const HISTORY_KEY = 'dekita_history';
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(entries.slice(0, 7)));
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(entries.slice(0, 30)));
     }
 
-    // app.jsのrenderTimeline関数を呼び出す
-    if (typeof window.renderTimeline === 'function') {
-      window.renderTimeline();
+    // 履歴ビューを再描画
+    if (typeof window.renderHistoryView === 'function') {
+      window.renderHistoryView();
     }
   } catch (e) {
     console.warn('[Dekita] Firestoreからの読み込みエラー:', e);
@@ -203,6 +202,7 @@ window.saveToFirestore = async function (entry) {
       id: entry.id,
       intention: entry.intention || '',
       message: entry.message || '',
+      summary: entry.summary || '',
       timestamp: entry.timestamp || new Date().toISOString(),
       source: entry.source || 'ai',
     });
